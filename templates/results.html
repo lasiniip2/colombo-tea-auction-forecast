@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Test results{% endblock %}
+{% block content %}
+<section class="intro">
+  <h1>Compare the models</h1>
+  <p>{{ "{:,}".format(metadata.test_pairs) }} matched quotations across {{ metadata.test_auctions }} reserved auctions · {{ metadata.test_start }} to {{ metadata.test_end }}</p>
+</section>
+<div class="metrics">
+  <article class="metric"><span>Best overall by MAE · {{ benchmark.method }}</span><strong>LKR {{ "{:,.2f}".format(benchmark["MAE (LKR)"]) }} MAE</strong></article>
+  <article class="metric"><span>Best ML model by MAE · {{ best.method }}</span><strong>LKR {{ "{:,.2f}".format(best["MAE (LKR)"]) }} MAE</strong></article>
+</div>
+<div class="table-wrap">
+  <table>
+    <caption>Holdout leaderboard ranked by MAE</caption>
+    <thead><tr><th scope="col">Method</th><th scope="col">Approach</th><th scope="col" class="number">MAE (LKR)</th><th scope="col" class="number">RMSE (LKR)</th><th scope="col" class="number">R²</th><th scope="col" class="number">Within LKR {{ accuracy_tolerance }}</th></tr></thead>
+    <tbody>
+      {% for row in scores %}
+      <tr><th scope="row">{{ row.method }}</th><td>{{ method_types[row.method] }}</td><td class="number">{{ "%.2f"|format(row["MAE (LKR)"]) }}</td><td class="number">{{ "%.2f"|format(row["RMSE (LKR)"]) }}</td><td class="number">{{ "%.3f"|format(row["R²"]) }}</td><td class="number">{{ "%.2f"|format(row.accuracy_pct) }}%</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<section class="panel result-section">
+  <h2>Predicted vs. recorded prices</h2>
+  <form method="get" class="filters">
+    <label>Method
+      <select name="method">{% for item in methods %}<option{% if item == method %} selected{% endif %}>{{ item }}</option>{% endfor %}</select>
+    </label>
+    <label>Reserved auction
+      <select name="auction"><option value="">All auctions</option>{% for day in dates %}<option{% if day == auction %} selected{% endif %}>{{ day }}</option>{% endfor %}</select>
+    </label>
+    <button type="submit">Apply filters</button>
+  </form>
+  <p class="muted">{{ "{:,}".format(points|length) }} quotations · MAE LKR {{ "%.2f"|format(selected_mae) }} · {{ "%.2f"|format(selected_accuracy) }}% within LKR {{ accuracy_tolerance }}. Hover over a point to see its prices.</p>
+  <div class="chart-wrap">
+    <canvas id="price-chart" role="img" aria-label="Scatter plot of predicted prices against recorded prices. The dashed line shows exact predictions."></canvas>
+    <div id="chart-detail" class="chart-detail" hidden></div>
+  </div>
+  <div id="chart-legend" class="legend" aria-label="Tea catalogues"></div>
+  <script id="chart-data" type="application/json">{{ points|tojson }}</script>
+  <script src="{{ url_for('static', filename='chart.js') }}" defer></script>
+</section>
+<section class="panel result-section">
+  <h2>How to read the comparison</h2>
+  <p>MAE is the average absolute error in LKR. RMSE gives more weight to large errors. R² measures fit relative to predicting the average price. Lower MAE and RMSE and higher R² are better.</p>
+  <p>The within-LKR-{{ accuracy_tolerance }} rate counts forecasts that differ from the recorded price by at most LKR {{ accuracy_tolerance }}. {{ best_accuracy.method }} led the ML models at <strong>{{ "%.2f"|format(best_accuracy.accuracy_pct) }}%</strong>. The last-price benchmark reached <strong>{{ "%.2f"|format(benchmark.accuracy_pct) }}%</strong>.</p>
+  <p>All methods were scored on the same reserved quotations. Carrying forward the last price gave the smallest average error. The stack had the lowest MAE among the six ML models, trailing the benchmark by LKR {{ "%.2f"|format(best["MAE (LKR)"] - benchmark["MAE (LKR)"]) }}.</p>
+</section>
+{% endblock %}

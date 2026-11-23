@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · Colombo Tea Auction</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('forecast') }}">Colombo<br> Tea Auction</a>
+    <nav aria-label="Dashboard">
+      <a href="{{ url_for('overview') }}"{% if active == 'overview' %} aria-current="page"{% endif %}>Overview</a>
+      <a href="{{ url_for('forecast') }}"{% if active == 'forecast' %} aria-current="page"{% endif %}>Price forecast</a>
+      <a href="{{ url_for('results') }}"{% if active == 'results' %} aria-current="page"{% endif %}>Model comparison</a>
+    </nav>
+    <div class="sidebar-source">
+      <span>Ensemble learning project</span>
+      <a href="https://huggingface.co/datasets/colombo-tea-auction-prices/cta-price-prediction">Dataset source</a>
+    </div>
+  </aside>
+  <main class="shell" id="main">{% block content %}{% endblock %}</main>
+</body>
+</html>

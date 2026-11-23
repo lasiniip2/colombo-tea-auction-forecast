@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<section class="intro">
+  <h1>Colombo tea price forecasting</h1>
+  <p>Can ensemble models improve on the last published price when estimating the next Colombo Tea Auction midpoint?</p>
+  <div class="form-actions">
+    <a class="button-link" href="{{ url_for('forecast') }}">Open forecast</a>
+    <a class="secondary-action" href="{{ url_for('results') }}">Compare models</a>
+  </div>
+</section>
+<div class="metrics overview-metrics">
+  <article class="metric"><span>Development pairs</span><strong>{{ "{:,}".format(metadata.development_pairs) }}</strong></article>
+  <article class="metric"><span>Reserved test pairs</span><strong>{{ "{:,}".format(metadata.test_pairs) }}</strong></article>
+  <article class="metric"><span>Tea quotation groups</span><strong>{{ group_count }}</strong></article>
+</div>
+<section class="panel">
+  <h2>How the forecast works</h2>
+  <p>Match a tea group across consecutive recorded sales. Use seven tea descriptors, the upcoming auction month, and the last published midpoint to estimate the price change. Add that change to the last midpoint for the forecast.</p>
+  <p>Models were trained on earlier sales and compared on {{ metadata.test_auctions }} later auctions. The CSV records auction dates without publication timestamps, so the backtest assumes the previous report was available before the next sale.</p>
+</section>
+<section class="panel result-section">
+  <h2>Ensemble methods</h2>
+  <dl class="methods">
+    <div><dt>Bagging</dt><dd>Random Forest averages trees trained on bootstrap samples.</dd></div>
+    <div><dt>Randomized trees</dt><dd>Extra Trees averages trees with more randomized split thresholds.</dd></div>
+    <div><dt>Boosting</dt><dd>XGBoost, CatBoost, and LightGBM build trees in sequence to improve earlier predictions.</dd></div>
+    <div><dt>Stacking</dt><dd>Ridge regression combines Random Forest and XGBoost using predictions from chronological validation folds.</dd></div>
+  </dl>
+</section>
+{% endblock %}

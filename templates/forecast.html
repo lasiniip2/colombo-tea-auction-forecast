@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Forecast{% endblock %}
+{% block content %}
+<section class="intro">
+  <h1>Forecast the next auction</h1>
+  <p>Choose the tea’s characteristics and enter the last published midpoint to estimate its next auction price in Sri Lankan rupees.</p>
+</section>
+<section class="panel">
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if notice %}<p class="muted" role="status">{{ notice }}</p>{% endif %}
+  <form method="post" id="forecast-form">
+    <fieldset>
+      <legend>Tea characteristics</legend>
+      <p class="muted">Start with the catalogue. The form shows the available choices as you go and fills in fields with a single choice.</p>
+      <div class="fields descriptor-fields">
+        {% for key, label in fields.items() %}
+        {% set choice = choices[key] %}
+        <label id="tea-field-{{ key }}"{% if choice.hidden %} hidden{% endif %}><span id="tea-label-{{ key }}">{{ label }}</span>
+          <select name="{{ key }}" data-tea-field="{{ key }}" data-placeholder="Choose {{ label|lower }}" aria-labelledby="tea-label-{{ key }}" aria-describedby="tea-hint-{{ key }}" required{% if not choice.options %} disabled{% endif %}>
+            {% if choice.options|length != 1 %}
+            <option value="">Choose {{ label|lower }}</option>
+            {% endif %}
+            {% for value in choice.options %}
+            <option value="{{ value }}"{% if choice.value == value %} selected{% endif %}>{{ labels[key][value] }}</option>
+            {% endfor %}
+          </select>
+          <small class="muted" id="tea-hint-{{ key }}"{% if choice.hidden or choice.options|length != 1 %} hidden{% endif %}>Only recorded option</small>
+        </label>
+        {% endfor %}
+      </div>
+      <p id="group-status" class="group-status muted" aria-live="polite"></p>
+    </fieldset>
+    <fieldset class="auction-inputs">
+      <legend>Auction details</legend>
+      <div class="fields auction-fields">
+      <label>Upcoming auction date
+        <input name="auction_date" type="date" min="{{ today }}" value="{{ values.auction_date }}" required>
+      </label>
+      <label>Last published midpoint (LKR)
+        <input name="last_price" type="number" min="0.01" step="0.01" placeholder="e.g. 1250" value="{{ values.last_price }}" required>
+      </label>
+      </div>
+    </fieldset>
+    <div class="form-actions">
+      <button type="submit" name="action" value="estimate" id="estimate-prices"{% if not selected %} disabled{% endif %}>Estimate prices</button>
+      <noscript><button type="submit" name="action" value="update" formnovalidate>Show available choices</button></noscript>
+      <a class="secondary-action" href="{{ url_for('forecast') }}">Clear inputs</a>
+    </div>
+  </form>
+  <script id="tea-groups" type="application/json">{{ groups|tojson }}</script>
+  <script id="tea-options" type="application/json">{{ labels|tojson }}</script>
+  <script src="{{ url_for('static', filename='forecast.js', v=forecast_js_version) }}" defer></script>
+</section>
+{% if estimates %}
+<section class="result-section" aria-label="Forecast estimates" id="forecast-estimates">
+  <h2>Forecast for {{ values.auction_date }}</h2>
+  <p class="muted">{{ group_label(selected) }}</p>
+  <div class="metrics">
+    <article class="metric"><span>Stacked model estimate</span><strong>LKR {{ "{:,.2f}".format(estimates[metadata.best_model]) }}</strong></article>
+    <article class="metric"><span>Last-price benchmark</span><strong>LKR {{ "{:,.2f}".format(estimates[metadata.benchmark]) }}</strong></article>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <caption>Price estimates by method</caption>
+      <thead><tr><th scope="col">Method</th><th scope="col">Approach</th><th scope="col" class="number">Forecast (LKR)</th><th scope="col" class="number">Change (LKR)</th></tr></thead>
+      <tbody>
+        {% for row in scores %}
+        <tr><th scope="row">{{ row.method }}</th><td>{{ method_types[row.method] }}</td><td class="number">{{ "{:,.2f}".format(estimates[row.method]) }}</td><td class="number">{{ "{:+,.2f}".format(estimates[row.method] - estimates[metadata.benchmark]) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

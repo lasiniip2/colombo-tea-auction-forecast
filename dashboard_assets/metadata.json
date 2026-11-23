@@ -1,0 +1,10 @@
+{
+  "target": "next_price_mid_lkr",
+  "development_pairs": 7592,
+  "test_pairs": 1764,
+  "test_auctions": 17,
+  "test_start": "2025-10-28",
+  "test_end": "2026-03-24",
+  "benchmark": "Last published price",
+  "best_model": "Random Forest + XGBoost stack"
+}
